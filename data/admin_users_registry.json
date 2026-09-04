@@ -1,0 +1,20 @@
+[
+  {
+    "uid": "demo_uid_sridev_dev",
+    "email": "sridev.student@lifeos.internal",
+    "displayName": "Sridev Dev",
+    "status": "Active",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "role": "Student (Demo)",
+    "isDemo": true
+  },
+  {
+    "uid": "demo_uid_alex_rivera",
+    "email": "alex.freelancer@lifeos.internal",
+    "displayName": "Alex Rivera",
+    "status": "Active",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "role": "Freelancer (Demo)",
+    "isDemo": true
+  }
+]

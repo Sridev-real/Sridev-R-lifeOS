@@ -1,0 +1,12 @@
+{
+  "name": "LIFEOS",
+  "description": "Your information. Your problems. Your opportunities. One secure AI assistant.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,141 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Deny all access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Security Primitives
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Entity Schema Validators
+    function isValidUserProfile(data, userId) {
+      return data.uid is string && data.uid == userId &&
+             data.email is string && data.email.size() <= 256 &&
+             data.displayName is string && data.displayName.size() <= 128 &&
+             data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    function isValidVaultItem(data, userId) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId == userId &&
+             data.category is string && (data.category == 'identity' || data.category == 'education' || data.category == 'employment' || data.category == 'financial' || data.category == 'documents') &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.documentType is string && data.documentType.size() <= 100 &&
+             data.status is string && (data.status == 'verified' || data.status == 'unverified' || data.status == 'expiring_soon' || data.status == 'expired') &&
+             data.isEncryptedInVault is bool &&
+             data.lastUpdated is string && data.lastUpdated.size() <= 64;
+    }
+
+    function isValidProblem(data, userId) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId == userId &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 250 &&
+             data.category is string && data.category.size() <= 100 &&
+             data.rawInput is string && data.rawInput.size() <= 10000 &&
+             data.status is string && (data.status == 'Resolution in progress' || data.status == 'Action Plan Ready' || data.status == 'Awaiting Information' || data.status == 'Resolved') &&
+             data.understanding is string && data.understanding.size() <= 2000 &&
+             data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    function isValidOpportunity(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 250 &&
+             data.category is string && data.category.size() <= 100 &&
+             data.shortExplanation is string && data.shortExplanation.size() <= 2000 &&
+             data.eligibilityConfidence is string && (data.eligibilityConfidence == 'Likely eligible' || data.eligibilityConfidence == 'Possibly eligible' || data.eligibilityConfidence == 'Needs verification') &&
+             data.deadline is string && data.deadline.size() <= 64 &&
+             data.provider is string && data.provider.size() <= 200;
+    }
+
+    function isValidDeadline(data, userId) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId == userId &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.category is string && (data.category == 'Document expiry' || data.category == 'Application deadline' || data.category == 'Payment deadline' || data.category == 'Personal reminder' || data.category == 'Other') &&
+             data.dueDate is string && data.dueDate.size() <= 64 &&
+             data.status is string && (data.status == 'Upcoming' || data.status == 'Due soon' || data.status == 'Overdue' || data.status == 'Completed') &&
+             data.priority is string && (data.priority == 'high' || data.priority == 'medium' || data.priority == 'low');
+    }
+
+    function isValidAction(data, userId) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId == userId &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.priority is string && (data.priority == 'NOW' || data.priority == 'NEXT' || data.priority == 'LATER') &&
+             data.reason is string && data.reason.size() <= 1000 &&
+             data.nextStep is string && data.nextStep.size() <= 1000 &&
+             data.sourceType is string && (data.sourceType == 'Problem' || data.sourceType == 'Vault Expiry' || data.sourceType == 'Deadline' || data.sourceType == 'Opportunity' || data.sourceType == 'Personal') &&
+             data.state is string && (data.state == 'Pending' || data.state == 'In Progress' || data.state == 'Completed') &&
+             data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    // User Profile Document Root
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserProfile(incoming(), userId);
+      allow update: if isOwner(userId) && isValidUserProfile(incoming(), userId);
+      allow delete: if isOwner(userId);
+
+      // Private User Vault Subcollection
+      match /vault/{vaultId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(vaultId) && isValidVaultItem(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(vaultId) && isValidVaultItem(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(vaultId);
+      }
+
+      // Private User Problems Subcollection
+      match /problems/{problemId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(problemId) && isValidProblem(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(problemId) && isValidProblem(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(problemId);
+      }
+
+      // Private User Opportunities Subcollection
+      match /opportunities/{opportunityId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(opportunityId) && isValidOpportunity(incoming());
+        allow update: if isOwner(userId) && isValidId(opportunityId) && isValidOpportunity(incoming());
+        allow delete: if isOwner(userId) && isValidId(opportunityId);
+      }
+
+      // Private User Deadlines Subcollection
+      match /deadlines/{deadlineId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(deadlineId) && isValidDeadline(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(deadlineId) && isValidDeadline(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(deadlineId);
+      }
+
+      // Private User Actions Subcollection
+      match /actions/{actionId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(actionId) && isValidAction(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(actionId) && isValidAction(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(actionId);
+      }
+    }
+  }
+}

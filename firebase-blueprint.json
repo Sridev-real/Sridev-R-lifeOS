@@ -1,0 +1,154 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile and personal preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "photoURL": { "type": "string", "maxLength": 512 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "preferences": {
+          "type": "object",
+          "properties": {
+            "darkMode": { "type": "boolean" },
+            "autoMaskSensitiveData": { "type": "boolean" },
+            "notifyExpiringDays": { "type": "number" },
+            "emailAlerts": { "type": "boolean" }
+          }
+        }
+      },
+      "required": ["uid", "email", "displayName", "createdAt"]
+    },
+    "VaultItem": {
+      "title": "VaultItem",
+      "description": "Securely stored personal document, credential, or identity record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "category": { "type": "string", "enum": ["identity", "education", "employment", "financial", "documents"] },
+        "title": { "type": "string", "maxLength": 200 },
+        "documentType": { "type": "string", "maxLength": 100 },
+        "identifierNumber": { "type": "string", "maxLength": 200 },
+        "isSensitiveIdentifier": { "type": "boolean" },
+        "issuer": { "type": "string", "maxLength": 200 },
+        "issueDate": { "type": "string", "maxLength": 64 },
+        "expiryDate": { "type": "string", "maxLength": 64 },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "tags": { "type": "array" },
+        "fields": { "type": "array" },
+        "status": { "type": "string", "enum": ["verified", "unverified", "expiring_soon", "expired"] },
+        "isEncryptedInVault": { "type": "boolean" },
+        "lastUpdated": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "category", "title", "documentType", "status", "isEncryptedInVault", "lastUpdated"]
+    },
+    "ProblemResolution": {
+      "title": "ProblemResolution",
+      "description": "Operational problem report, structured resolution plan, and action tracker.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 250 },
+        "category": { "type": "string", "maxLength": 100 },
+        "rawInput": { "type": "string", "maxLength": 10000 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "enum": ["Resolution in progress", "Action Plan Ready", "Awaiting Information", "Resolved"] },
+        "understanding": { "type": "string", "maxLength": 2000 },
+        "missingInformation": { "type": "array" },
+        "actionPlan": { "type": "array" },
+        "communicationDraft": { "type": "string", "maxLength": 5000 },
+        "notes": { "type": "string", "maxLength": 2000 }
+      },
+      "required": ["id", "userId", "title", "category", "rawInput", "createdAt", "status", "understanding"]
+    },
+    "Opportunity": {
+      "title": "Opportunity",
+      "description": "Verified scholarship, government scheme, or educational assistance opportunity.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 250 },
+        "category": { "type": "string", "maxLength": 100 },
+        "shortExplanation": { "type": "string", "maxLength": 2000 },
+        "whyMatched": { "type": "string", "maxLength": 1000 },
+        "eligibilityConfidence": { "type": "string", "enum": ["Likely eligible", "Possibly eligible", "Needs verification"] },
+        "deadline": { "type": "string", "maxLength": 64 },
+        "requiredDocuments": { "type": "array" },
+        "verificationStatus": { "type": "string", "maxLength": 100 },
+        "provider": { "type": "string", "maxLength": 200 },
+        "isSaved": { "type": "boolean" }
+      },
+      "required": ["id", "title", "category", "shortExplanation", "eligibilityConfidence", "deadline", "provider"]
+    },
+    "DeadlineItem": {
+      "title": "DeadlineItem",
+      "description": "Tracked operational deadline, document expiration, or personal milestone.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 200 },
+        "category": { "type": "string", "enum": ["Document expiry", "Application deadline", "Payment deadline", "Personal reminder", "Other"] },
+        "dueDate": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "enum": ["Upcoming", "Due soon", "Overdue", "Completed"] },
+        "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+        "associatedVaultDocId": { "type": "string", "maxLength": 128 },
+        "associatedProblemId": { "type": "string", "maxLength": 128 },
+        "associatedOpportunityId": { "type": "string", "maxLength": 128 },
+        "notes": { "type": "string", "maxLength": 2000 }
+      },
+      "required": ["id", "userId", "title", "category", "dueDate", "status", "priority"]
+    },
+    "ActionItem": {
+      "title": "ActionItem",
+      "description": "Prioritized action item categorized as NOW, NEXT, or LATER.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 200 },
+        "priority": { "type": "string", "enum": ["NOW", "NEXT", "LATER"] },
+        "reason": { "type": "string", "maxLength": 1000 },
+        "dueDate": { "type": "string", "maxLength": 64 },
+        "requiredDocument": { "type": "string", "maxLength": 200 },
+        "nextStep": { "type": "string", "maxLength": 1000 },
+        "sourceType": { "type": "string", "enum": ["Problem", "Vault Expiry", "Deadline", "Opportunity", "Personal"] },
+        "sourceId": { "type": "string", "maxLength": 128 },
+        "state": { "type": "string", "enum": ["Pending", "In Progress", "Completed"] },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "title", "priority", "reason", "nextStep", "sourceType", "state", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document isolated per user UID."
+    },
+    "/users/{userId}/vault/{vaultId}": {
+      "schema": "VaultItem",
+      "description": "Private encrypted vault item collection isolated by owner UID."
+    },
+    "/users/{userId}/problems/{problemId}": {
+      "schema": "ProblemResolution",
+      "description": "Private problem resolution cases isolated by owner UID."
+    },
+    "/users/{userId}/opportunities/{opportunityId}": {
+      "schema": "Opportunity",
+      "description": "Saved and matched opportunities for the authenticated user."
+    },
+    "/users/{userId}/deadlines/{deadlineId}": {
+      "schema": "DeadlineItem",
+      "description": "Private deadlines and document expiration milestones."
+    },
+    "/users/{userId}/actions/{actionId}": {
+      "schema": "ActionItem",
+      "description": "Action center items with NOW, NEXT, LATER triage."
+    }
+  }
+}
