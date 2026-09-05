@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://lifeos-backend-v4sh.onrender.com/api/:path*"
+    }
+  ]
+}
